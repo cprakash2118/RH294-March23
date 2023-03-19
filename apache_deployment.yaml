@@ -1,0 +1,39 @@
+---
+- name: 1st play-Apache Deployment
+  hosts: web
+  vars: 
+    - package_list: 
+        - httpd
+        - firewalld
+    - service_list:
+        - httpd
+        - firewalld
+  tasks: 
+    - name: 1st task - Pacakage installation
+      ansible.builtin.dnf:
+        name: "{{ package_list }}"
+        state: present
+
+    - name: 2nd task - Service start and enable
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop: "{{ service_list }}"   
+
+    - name: 3rd task - Deploying application - index.html
+      ansible.builtin.copy:
+        content: "My web Server \n"
+        dest: /var/www/html/index.html
+
+    - name: 4th task - adding firewall rule - http
+      ansible.posix.firewalld:
+        service: http
+        immediate: yes
+        permanent: yes
+        state: enabled
+
+...
+
+            
+

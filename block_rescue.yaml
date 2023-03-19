@@ -1,0 +1,27 @@
+---
+- name: Block & Rescue.
+  hosts: web
+  tasks:
+     - name: Block part 
+       block:
+          - name: Task-01 
+            ansible.builtin.dnf: 
+                name: abc 
+                state: present 
+            ignore_errors: yes
+
+          - name: Task-02 
+            ansible.builtin.service:
+                name: abc123 
+                state: started 
+            ignore_errors: yes
+       rescue:
+          - name: Rescue - 1st task 
+            ansible.builtin.debug:
+                msg: "Rescue - done"
+
+       always: 
+          - name: Always - 1st task 
+            ansible.builtin.debug:
+                msg: "This will always execute"
+

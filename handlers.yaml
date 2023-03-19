@@ -1,0 +1,69 @@
+---
+- name: 1st play-Apache Deployment
+  hosts: all
+  gather_facts: yes
+  vars: 
+    - package_list: 
+        - httpd
+        - firewalld
+    - service_list:
+        - httpd
+        - firewalld
+  tasks: 
+    - name: 1st task - Pacakage installation
+      ansible.builtin.dnf:
+        name: "{{ package_list }}"
+        state: present
+      when: inventory_hostname in groups ['db']
+
+    - name: urgent 
+      shell: "setenforce 0"
+
+    - name: 2nd task - Service start and enable
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop: "{{ service_list }}"   
+      when: inventory_hostname in groups ['db']
+      ignore_errors: yes
+
+    - name: Directory create 
+      ansible.builtin.file: 
+        path: /var/www/vhosts/
+        state: directory
+
+    - name: Config changes on apache.
+      ansible.builtin.copy: 
+        src: httpd.conf
+        dest: /etc/httpd/conf.d/httpd.conf
+      notify: 
+            - apache_restart
+
+    - name: 3rd task - Deploying application - index.html
+      ansible.builtin.copy:
+        content: "My web Server \n"
+        dest: /var/www/vhosts/index.html
+      when: inventory_hostname in groups ['db']
+
+    - name: 4th task - adding firewall rule - http
+      ansible.posix.firewalld:
+        service: http
+        immediate: yes
+        permanent: yes
+        state: enabled
+      when: inventory_hostname in groups ['db']
+
+    - name: Display value 
+      ansible.builtin.debug:
+         msg: "This ip belongs to {{ ansible_fqdn }}"
+  handlers: 
+      - name: apache_restart
+        ansible.builtin.service:
+              service: httpd 
+              state: restarted
+     
+...
+
+            
+
